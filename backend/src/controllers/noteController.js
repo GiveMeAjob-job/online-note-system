@@ -54,12 +54,57 @@ const noteController = {
     }
   },
 
+  createOrUpdateDraft: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const { title, content, category, tags } = req.body;
+
+      let draft = await Note.findOne({ user: userId, isDraft: true });
+
+      if (draft) {
+        draft.title = title;
+        draft.content = content;
+        draft.category = category;
+        draft.tags = tags;
+        draft.updatedAt = Date.now();
+      } else {
+        draft = new Note({
+          user: userId,
+          title,
+          content,
+          category,
+          tags,
+          isDraft: true
+        });
+      }
+
+      await draft.save();
+      res.json(draft);
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      res.status(500).json({ message: '保存草稿失败', error: error.message });
+    }
+  },
+
+  getDraft: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const draft = await Note.findOne({ user: userId, isDraft: true });
+      if (!draft) {
+        return res.json({ title: '', content: '', category: '', tags: [] });
+      }
+      res.json(draft);
+    } catch (error) {
+      console.error('Error fetching draft:', error);
+      res.status(500).json({ message: '获取草稿失败', error: error.message });
+    }
+  },
+
   createNote: async (req, res) => {
     try {
       const userId = req.params.userId;
       let { title, content, category, tags } = req.body;
       
-      // 如果标题为空，设置一个默认值
       if (!title || title.trim() === '') {
         title = '未命名笔记';
       }
@@ -69,9 +114,15 @@ const noteController = {
         title,
         content,
         category,
-        tags
+        tags,
+        isDraft: false
       });
+
       const savedNote = await newNote.save();
+
+      // 删除草稿
+      await Note.findOneAndDelete({ user: userId, isDraft: true });
+
       res.status(201).json(savedNote);
     } catch (error) {
       console.error('Error creating note:', error);
@@ -83,7 +134,8 @@ const noteController = {
     try {
       const userId = req.params.userId;
       const noteId = req.params.id;
-      const { title, content, category, tags, isDraft } = req.body;
+      const { title, content, category, tags } = req.body;
+
       const updatedNote = await Note.findOneAndUpdate(
         { _id: noteId, user: userId },
         { 
@@ -91,7 +143,7 @@ const noteController = {
           content, 
           category, 
           tags, 
-          isDraft, 
+          isDraft: false,
           updatedAt: Date.now(),
           $push: { 
             history: { 
@@ -102,7 +154,12 @@ const noteController = {
         },
         { new: true }
       ).populate('category').populate('tags');
+
       if (!updatedNote) return res.status(404).json({ message: '笔记未找到' });
+
+      // 删除草稿
+      await Note.findOneAndDelete({ user: userId, isDraft: true });
+
       res.json(updatedNote);
     } catch (error) {
       res.status(400).json({ message: '更新笔记失败', error: error.message });

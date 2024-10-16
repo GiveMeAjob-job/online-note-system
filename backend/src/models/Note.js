@@ -30,6 +30,10 @@ const NoteSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  isDraft: {
+    type: Boolean,
+    default: false
   }
 });
 

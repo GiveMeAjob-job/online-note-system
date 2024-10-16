@@ -5,6 +5,11 @@ const authMiddleware = require('../middlewares/auth');
 
 router.use(authMiddleware);
 
+// 草稿路由应该在最前面
+router.post('/draft', noteController.createOrUpdateDraft);
+router.get('/draft', noteController.getDraft);
+
+// 其他路由
 router.get('/', noteController.getAllNotes);
 router.get('/recent', noteController.getRecentNotes);
 router.get('/search', noteController.searchNotes);
