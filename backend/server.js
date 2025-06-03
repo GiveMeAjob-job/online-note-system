@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const userRoutes = require('./routes/userRoutes');
+const logger = require('./src/utils/logger');
 
 // 加载环境变量
 dotenv.config();
@@ -22,5 +23,5 @@ app.use('/api/users', userRoutes);
 // 启动服务器
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 });

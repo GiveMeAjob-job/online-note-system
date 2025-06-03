@@ -46,7 +46,6 @@ app.use('/api/users/:userId/notes', notesRouter);
 app.use('/api/users/:userId/categories', categoriesRouter);
 app.use('/api/users/:userId/tags', tagsRouter);
 app.use('/api/users/:userId/stats', statsRouter);
-app.use('/api/users/:userId/notes', notesRouter);
 
 // 错误处理
 app.use(errorHandler);
@@ -63,7 +62,7 @@ server.listen(PORT, () => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).send('Something broke!');
 });
 
