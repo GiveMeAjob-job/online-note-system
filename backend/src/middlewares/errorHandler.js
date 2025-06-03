@@ -1,11 +1,12 @@
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
   // 记录错误
-  console.error(err);
+  logger.error(err);
 
   // Mongoose 错误处理
   if (err.name === 'CastError') {

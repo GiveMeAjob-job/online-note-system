@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const logger = require('../utils/logger');
 
 // 配置 multer 存储
 const storage = multer.diskStorage({
@@ -17,24 +18,24 @@ const upload = multer({ storage: storage });
 
 exports.login = async (req, res) => {
   try {
-    console.log('Login attempt:', req.body);
+    logger.info(`Login attempt: ${JSON.stringify(req.body)}`);
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    console.log('User found:', user ? 'Yes' : 'No');
+    logger.info(`User found: ${user ? 'Yes' : 'No'}`);
 
     if (!user || !(await user.comparePassword(password))) {
-      console.log('Authentication failed');
+      logger.warn('Authentication failed');
       return res.status(401).json({ message: '邮箱或密码不正确' });
     }
 
-    console.log('Authentication successful');
+    logger.info('Authentication successful');
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1d'
     });
 
     res.json({ token, user: { id: user._id, email: user.email, username: user.username } });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error(`Login error: ${error}`);
     res.status(500).json({ message: '服务器错误' });
   }
 };
@@ -63,7 +64,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ token, user: { id: user._id, name, email, username } });
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error(`Register error: ${error}`);
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({ message: messages.join(', ') });
@@ -80,7 +81,7 @@ exports.getProfile = async (req, res) => {
     }
     res.json(user);
   } catch (error) {
-    console.error('Get profile error:', error);
+    logger.error(`Get profile error: ${error}`);
     res.status(500).json({ message: '获取用户资料失败' });
   }
 };
@@ -102,7 +103,7 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ message: '个人资料更新成功', user: user.toObject({ getters: true, versionKey: false }) });
   } catch (error) {
-    console.error('Update profile error:', error);
+    logger.error(`Update profile error: ${error}`);
     res.status(500).json({ message: '更新用户资料失败' });
   }
 };
@@ -144,7 +145,7 @@ exports.uploadAvatar = [
 
       res.json({ message: '头像上传成功', user });
     } catch (error) {
-      console.error('Upload avatar error:', error);
+      logger.error(`Upload avatar error: ${error}`);
       res.status(500).json({ message: '上传头像失败', error: error.message });
     }
   }

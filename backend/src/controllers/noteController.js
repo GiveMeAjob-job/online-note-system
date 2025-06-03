@@ -1,6 +1,7 @@
 const Note = require('../models/Note');
 const Category = require('../models/Category');
 const Tag = require('../models/Tag');
+const logger = require('../utils/logger');
 
 const noteController = {
   getAllNotes: async (req, res) => {
@@ -35,21 +36,21 @@ const noteController = {
     try {
       const userId = req.user.id; // 从认证中间件获取用户ID
       const noteId = req.params.id;
-      console.log(`Attempting to fetch note. UserID: ${userId}, NoteID: ${noteId}`);
+      logger.info(`Attempting to fetch note. UserID: ${userId}, NoteID: ${noteId}`);
       
       const note = await Note.findOne({ _id: noteId, user: userId })
         .populate('category')
         .populate('tags');
       
       if (!note) {
-        console.log(`Note not found. UserID: ${userId}, NoteID: ${noteId}`);
+        logger.warn(`Note not found. UserID: ${userId}, NoteID: ${noteId}`);
         return res.status(404).json({ message: '笔记未找到' });
       }
       
-      console.log(`Note found:`, note);
+      logger.info('Note found:', note);
       res.json(note);
     } catch (error) {
-      console.error('Error in getNote:', error);
+      logger.error(`Error in getNote: ${error}`);
       res.status(500).json({ message: '获取笔记失败', error: error.message });
     }
   },
@@ -81,7 +82,7 @@ const noteController = {
       await draft.save();
       res.json(draft);
     } catch (error) {
-      console.error('Error saving draft:', error);
+      logger.error(`Error saving draft: ${error}`);
       res.status(500).json({ message: '保存草稿失败', error: error.message });
     }
   },
@@ -95,7 +96,7 @@ const noteController = {
       }
       res.json(draft);
     } catch (error) {
-      console.error('Error fetching draft:', error);
+      logger.error(`Error fetching draft: ${error}`);
       res.status(500).json({ message: '获取草稿失败', error: error.message });
     }
   },
@@ -125,7 +126,7 @@ const noteController = {
 
       res.status(201).json(savedNote);
     } catch (error) {
-      console.error('Error creating note:', error);
+      logger.error(`Error creating note: ${error}`);
       res.status(500).json({ message: '创建笔记失败', error: error.message });
     }
   },
@@ -171,23 +172,23 @@ const noteController = {
       const noteId = req.params.id;  // 注意这里使用 id 而不是 noteId
       const userId = req.user.id;    // 从 req.user 获取 userId
 
-      console.log('Attempting to delete note:', noteId, 'for user:', userId);
+      logger.info(`Attempting to delete note: ${noteId} for user: ${userId}`);
 
       const deletedNote = await Note.findOneAndDelete({ _id: noteId, user: userId });
       
       if (!deletedNote) {
-        console.log('Note not found or does not belong to user');
+        logger.warn('Note not found or does not belong to user');
         return res.status(404).json({ message: 'Note not found or user not authorized' });
       }
 
-      console.log('Note deleted successfully');
+      logger.info('Note deleted successfully');
       
       // 获取更新后的统计信息
       const updatedStats = await getUserStats(userId);
       
       res.json({ message: 'Note deleted successfully', updatedStats });
     } catch (error) {
-      console.error('Error in deleteNote:', error);
+      logger.error(`Error in deleteNote: ${error}`);
       res.status(500).json({ message: 'Error deleting note', error: error.message });
     }
   },
@@ -264,7 +265,7 @@ const getUserStats = async (userId) => {
     // ... 其他统计信息 ...
     return { totalNotes, /* 其他统计数据 */ };
   } catch (error) {
-    console.error('Error getting user stats:', error);
+    logger.error(`Error getting user stats: ${error}`);
     throw error;
   }
 };
